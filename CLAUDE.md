@@ -57,6 +57,7 @@ void-break/
 │   ├── generation/     # Procedural generation (maps, enemy placement)
 │   ├── meta/           # Node map, run state, save/load
 │   ├── loot/           # Containers, drop tables, blueprints
+│   ├── fx/             # Game feel: screen shake, hit-stop, effect/sound helpers
 │   └── ui/             # UI logic (refit screen, HUD, map view)
 ├── resources/          # Resource INSTANCES (.tres) — the actual tunable data assets
 │   ├── ships/          # Ship stat / movement definitions (.tres)
@@ -86,6 +87,7 @@ void-break/
 - **Rewards**: containers drop from defeated enemies. Contents applied at node transition (refit phase). Local powerups are node-scoped.
 - **Fleet regen**: ships return next node with condition penalty. Repair costs resources.
 - **Combat systems**: weapon/defense variety is built from independent axes (delivery, projectile motion, damage interaction, defense), not per-type subclasses. Damageable entities expose `take_damage(dmg: Damage)` with a typed `Damage` packet (school + `bypass_barrier`). Full design in `docs/combat-system-design.md`.
+- **Game feel**: a `Feedback` autoload (`scripts/fx/`) is the global juice bus — `add_trauma()` (screen shake via `ShakeCamera`), `hit_stop()` (wall-clock-timed `Engine.time_scale` dips). `ShipBase` drives shake/hit-stop/hit-flash from `take_damage`, tuned per-ship via `@export`. VFX/SFX are optional `PackedScene`/`AudioStream` slots, inert until assigned.
 
 ## Module-Ready Architecture
 

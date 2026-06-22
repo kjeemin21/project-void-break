@@ -7,6 +7,21 @@
 
 <!-- New entries go below this line, newest first -->
 
+## [2026-06-22] Impact Feedback: Screen Shake + Hit-Stop + Hit-Flash (+ VFX/SFX hooks)
+- **File(s)**: `scripts/fx/feedback.gd`, `scripts/fx/shake_camera.gd`, `scripts/fx/sound_fx.gd`, `scripts/fx/one_shot_effect.gd`, `scripts/ships/ship_base.gd`
+- **Action (code-only feel — do these for the test):**
+  1. Register the autoload: Project Settings → Autoload → add `scripts/fx/feedback.gd` with node name **`Feedback`**. (Without this, screen shake / hit-stop silently no-op; hit-flash still works.)
+  2. Player camera: make the player's `Camera2D` use `scripts/fx/shake_camera.gd` (attach the script to the Camera2D node). Keep its **`ignore_rotation` = true** so the view does not spin with the ship. It auto-connects to `Feedback` and shakes on any trauma. Tune `max_offset` / `recovery`.
+  3. On `player_ship.tscn` and `enemy_basic.tscn`, set the **`visual`** export → the hull `Polygon2D` (enables the white hit-flash; no assets needed). Suggested feedback values:
+     - Player: `trauma_on_taking_hit` ≈ 0.4, `trauma_on_death` ≈ 0.6, `hitstop_on_death_sec` ≈ 0.4 @ `hitstop_scale` ≈ 0.25 (a dramatic death slow-mo — full game-over is Step 5).
+     - Enemy dummy: `trauma_on_taking_hit` = 0 (avoid shaking on every plink), `trauma_on_death` ≈ 0.4, optionally `hitstop_on_death_sec` ≈ 0.06 for weighty kills.
+- **Action (assets — LATER, optional):**
+  4. VFX: build hit-spark and explosion scenes (in-engine `GPUParticles2D`/`CPUParticles2D`, neon, `one_shot`). Attach `scripts/fx/one_shot_effect.gd` to the root (set `lifetime` ≥ particle lifetime) so they self-free. Assign to the ship's `hit_vfx` / `death_vfx`.
+  5. SFX: add short `.ogg`/`.wav` files (laser hit, explosion), set up an "SFX" audio bus, assign to `hit_sfx` / `death_sfx`. `SoundFX.play_2d()` already spawns self-freeing players.
+  6. **Where to get assets (all free/CC0):** SFX — Bfxr / jsfxr (browser, retro laser/explosion in seconds), Kenney.nl audio packs, freesound.org (CC0 filter). Particles need no external asset (built in-engine). A neon shader/glow (`WorldEnvironment` glow) pairs well with the flash.
+- **Details**: All feedback runs from `ShipBase.take_damage`, tuned per-ship via the "Impact Feedback" export group. Hit-stop uses global `Engine.time_scale` (wall-clock timed, so it self-restores). For dramatic moments later, call `Feedback.hit_stop(0.6, 0.25)` or `Feedback.impact(trauma, freeze_sec, scale)` directly.
+- **Priority**: medium (do steps 1–3 before the movement test; 4–6 whenever)
+
 ## [2026-06-22] Enemy Dummy Scene + Stats Resource + Hit Layers (Step 3)
 - **File(s)**: `scripts/ships/enemy_basic.gd`, `scripts/combat/health_component.gd`, `scripts/resources/ship_stats.gd`, `scripts/ships/ship_base.gd`
 - **Action**:

@@ -23,14 +23,42 @@ extends CharacterBody2D
 ## projectiles keep their own trajectory instead of moving with the ship.
 @export var projectile_container_path: NodePath
 
+@export_group("Impact Feedback")
+## Hull visual (the Polygon2D) to flash on hit. Leave null to skip hit-flash.
+@export var visual: CanvasItem
+## Modulate applied on hit; HDR-bright reads as a neon pop. Returns to the
+## visual's original modulate over hit_flash_time.
+@export var hit_flash_color: Color = Color(4.0, 4.0, 4.0, 1.0)
+@export var hit_flash_time: float = 0.06
+## Screen shake (0..1) when THIS ship is hit. Player: set > 0. Trash mobs: 0,
+## or the screen shakes on every stray hit.
+@export var trauma_on_taking_hit: float = 0.0
+## Screen shake (0..1) when THIS ship dies.
+@export var trauma_on_death: float = 0.4
+## Brief time-freeze on death for weighty kills (wall-clock seconds). 0 = off.
+@export var hitstop_on_death_sec: float = 0.0
+@export var hitstop_scale: float = 0.05
+
+@export_subgroup("Optional Assets")
+## Assign in the editor once you have art/audio; inert until then.
+@export var hit_vfx: PackedScene
+@export var death_vfx: PackedScene
+@export var hit_sfx: AudioStream
+@export var death_sfx: AudioStream
+
 var _weapon: Weapon
 var _health: HealthComponent
+var _feedback = null  ## Feedback autoload (optional; untyped for dynamic dispatch)
+var _visual_base_modulate: Color = Color.WHITE
 
 
 func _ready() -> void:
 	_weapon = Weapon.new(weapon_data)
 	_health = HealthComponent.new(stats)
 	_health.died.connect(_on_died)
+	_feedback = get_node_or_null("/root/Feedback")
+	if visual != null:
+		_visual_base_modulate = visual.modulate
 
 
 func _physics_process(delta: float) -> void:
@@ -41,7 +69,10 @@ func _physics_process(delta: float) -> void:
 func take_damage(dmg: Damage) -> void:
 	# Future: an area Barrier component intercepts here before the hull, unless
 	# dmg.bypass_barrier (see docs/combat-system-design.md §3).
-	_health.take_damage(dmg)
+	var was_alive: bool = not _health.is_dead()
+	_health.take_damage(dmg)  # may emit died -> _on_died (queues free) synchronously
+	var killed: bool = was_alive and _health.is_dead()
+	_play_impact_feedback(killed)
 
 
 ## The health component, for HUD binding / queries.
@@ -53,6 +84,36 @@ func get_health() -> HealthComponent:
 ## in Step 5; enemy -> drop loot in Step 7). Default: remove the ship.
 func _on_died() -> void:
 	queue_free()
+
+
+## Screen shake + hit-stop + hit-flash + optional VFX/SFX for an incoming hit.
+func _play_impact_feedback(killed: bool) -> void:
+	if _feedback != null:
+		if killed:
+			_feedback.add_trauma(trauma_on_death)
+			_feedback.hit_stop(hitstop_on_death_sec, hitstop_scale)
+		else:
+			_feedback.add_trauma(trauma_on_taking_hit)
+
+	if visual != null and not killed:
+		_flash_visual()
+
+	var world: Node = get_tree().current_scene
+	var vfx: PackedScene = death_vfx if killed else hit_vfx
+	if vfx != null and world != null:
+		var instance: Node = vfx.instantiate()
+		world.add_child(instance)
+		if instance is Node2D:
+			(instance as Node2D).global_position = global_position
+
+	var sfx: AudioStream = death_sfx if killed else hit_sfx
+	SoundFX.play_2d(sfx, world, global_position)
+
+
+func _flash_visual() -> void:
+	visual.modulate = hit_flash_color
+	var tween := create_tween()
+	tween.tween_property(visual, "modulate", _visual_base_modulate, hit_flash_time)
 
 
 ## Swap the weapon module at runtime (preserves nothing — fresh cooldown).
