@@ -7,6 +7,17 @@
 
 <!-- New entries go below this line, newest first -->
 
+## [2026-06-22] Enemy Dummy Scene + Stats Resource + Hit Layers (Step 3)
+- **File(s)**: `scripts/ships/enemy_basic.gd`, `scripts/combat/health_component.gd`, `scripts/resources/ship_stats.gd`, `scripts/ships/ship_base.gd`
+- **Action**:
+  1. Create `scenes/ships/enemy_basic.tscn`: root `CharacterBody2D` with `scripts/ships/enemy_basic.gd` attached. Children: a `CollisionShape2D` (hull-sized) and a neon `Polygon2D` in a distinct enemy color (e.g. red/orange) so it reads as hostile vs the player.
+  2. Collision layers (using the convention from the Step 2 entry / docs §4): set the enemy's `collision_layer` = enemies (2). This is what makes player projectiles connect — the projectile Area2D masks layer 2, and `body_entered` fires on bodies whose layer is in that mask. Set the enemy's `collision_mask` = environment (5) [+ player (1) later for ramming]; a stationary dummy barely needs a mask.
+  3. Create a `ShipStats` resource: in `resources/ships/`, New Resource → `ShipStats`, save as `resources/ships/enemy_dummy_stats.tres`. Set `max_hp` (e.g. 30), leave `defense`/`shield` at 0 and resistances at 1.0 for a plain target. Assign it to the enemy's `stats` export. (If unassigned, ShipBase makes a default 100-HP ShipStats.)
+  4. Place one or more enemy instances in `scenes/test_movement.tscn` within firing range so you can shoot them. Confirm: projectiles reduce HP, the dummy frees itself at 0 HP, and it idle-spins (`spin_speed`).
+  5. (Optional, helps debugging before the HUD exists) temporarily connect to the enemy's health via code or a Label to watch HP go down — full HUD is Step 5.
+- **Details**: `EnemyBasic extends ShipBase`, inheriting `take_damage(dmg: Damage)` and the death pipeline. The damage packet is typed (school + resistances), so once you add armored/resistant enemy stats later, weapon schools start to matter. Player ship death is intentionally NOT wired yet (ShipBase default frees the node) — `PlayerShip` overrides `_on_died` in Step 5.
+- **Priority**: high
+
 ## [2026-06-22] Projectile Scene + Weapon Resource + Fire Input (Step 2)
 - **File(s)**: `scripts/combat/projectile_base.gd`, `scripts/combat/weapon.gd`, `scripts/resources/weapon_data.gd`, `scripts/ships/ship_base.gd`, `scripts/ships/player_ship.gd`
 - **Action**:

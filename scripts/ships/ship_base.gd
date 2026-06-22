@@ -2,11 +2,15 @@ class_name ShipBase
 extends CharacterBody2D
 
 ## Shared base for all ships (player, allies, enemies). Provides the weapon mount
-## and firing; subclasses add movement/AI on top. Health will be added here as a
-## component in Step 3.
+## + firing and the health/damage pipeline; subclasses add movement/AI on top.
 ##
-## Composition over inheritance for data: the actual weapon behavior lives in a
-## swappable WeaponData resource, driven by a Weapon controller.
+## Composition over inheritance for data: behavior lives in swappable resources
+## (WeaponData, ShipStats), driven by controllers (Weapon, HealthComponent).
+## Projectiles call take_damage(dmg) on the ship body that they overlap.
+
+@export_group("Stats")
+## Swappable hull/shield/resistance tuning. Leave null for a default ShipStats.
+@export var stats: ShipStats
 
 @export_group("Weapon")
 ## Swappable weapon tuning. Leave null to start unarmed (a default WeaponData
@@ -20,14 +24,35 @@ extends CharacterBody2D
 @export var projectile_container_path: NodePath
 
 var _weapon: Weapon
+var _health: HealthComponent
 
 
 func _ready() -> void:
 	_weapon = Weapon.new(weapon_data)
+	_health = HealthComponent.new(stats)
+	_health.died.connect(_on_died)
 
 
 func _physics_process(delta: float) -> void:
 	_weapon.advance(delta)
+
+
+## Damage entry point — projectiles/rays call this on the ship body they hit.
+func take_damage(dmg: Damage) -> void:
+	# Future: an area Barrier component intercepts here before the hull, unless
+	# dmg.bypass_barrier (see docs/combat-system-design.md §3).
+	_health.take_damage(dmg)
+
+
+## The health component, for HUD binding / queries.
+func get_health() -> HealthComponent:
+	return _health
+
+
+## Called when health reaches zero. Override per ship type (player -> game over
+## in Step 5; enemy -> drop loot in Step 7). Default: remove the ship.
+func _on_died() -> void:
+	queue_free()
 
 
 ## Swap the weapon module at runtime (preserves nothing — fresh cooldown).

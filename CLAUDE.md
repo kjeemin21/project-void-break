@@ -103,8 +103,8 @@ Rules:
 ## Implementation Roadmap
 
 - [x] **Step 1: Movement** — `CharacterBody2D` or `RigidBody2D` with dampening-based fake Newtonian physics. All params via `MovementData` resource. `@export` for inspector tuning. (Editor: create player scene, attach script, add Camera2D) — _code complete; editor scene tracked in EDITOR_TODO.md_
-- [ ] ← CURRENT **Step 2: Projectile system** — `projectile_base.gd` with `WeaponData` resource. Shooting function on `ship_base`. Cooldown handling. (Editor: projectile scene with `Area2D`, input mapping for fire)
-- [ ] **Step 3: Passive enemy** — `health_component.gd` for HP/damage/death signal. `enemy_basic.gd` as a stationary rotating dummy. (Editor: enemy scene, collision layers between player projectiles and enemies)
+- [x] **Step 2: Projectile system** — `projectile_base.gd` with `WeaponData` resource. Shooting function on `ship_base`. Cooldown handling. (Editor: projectile scene with `Area2D`, input mapping for fire) — _code complete; editor scene tracked in EDITOR_TODO.md_
+- [ ] ← CURRENT **Step 3: Passive enemy** — `health_component.gd` for HP/damage/death signal. `enemy_basic.gd` as a stationary rotating dummy. (Editor: enemy scene, collision layers between player projectiles and enemies)
 - [ ] **Step 4: Enemy AI** — Extend enemy with detection, chase, and attack. Simple FSM: Idle → Chase → Attack. Enemy shooting. (Editor: detection `Area2D` on enemy, enemy projectile scene, collision layers for enemy projectiles vs player)
 - [ ] **Step 5: Player HP + death** — `health_component` on player. HUD health bar. Game over screen with restart. (Editor: HUD `CanvasLayer`, game over UI)
 - [ ] **Step 6: First ally** — `ally_ship.gd` with basic follow + attack AI. `doctrine_guard.gd` hardcoded as first behavior doctrine. (Editor: ally scene with distinct neon color)
