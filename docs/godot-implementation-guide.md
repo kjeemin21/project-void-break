@@ -1,6 +1,6 @@
 # Project Void Break — Godot Implementation Guide
 
-> **Engine**: Godot 4 (2D)  
+> **Engine**: Godot 4.7 (2D)  
 > **Scope**: Solo developer  
 > This document covers implementation difficulty, technical approaches, space movement design, and recommended development order.
 
