@@ -7,6 +7,25 @@
 
 <!-- New entries go below this line, newest first -->
 
+## [2026-06-22] ⚠ #1 RISK — The game has NEVER been run. Wire Steps 1–3 and PLAY it.
+- **Why this is first**: `resources/` and `scenes/` do not exist on disk yet — there are zero
+  `.tres`/`.tscn` files. Steps 1–3 are *code-complete* but none of the wiring that makes them
+  run exists (player/enemy/projectile scenes, collision layers, input map, the `Feedback`
+  autoload). Do NOT stack more code (Step 4+) until the existing code has actually executed.
+- **Action**:
+  1. Complete the three wiring entries below (Step 1 movement, Step 2 projectile, Step 3 enemy)
+     plus the Impact Feedback autoload/camera registration.
+  2. Run the game and answer the Phase-1 question: **is the movement / shooting / impact-feel
+     fun?** Tune `MovementData` (and the impact-feedback exports) live while playing, then bring
+     the tuned numbers back so they can be baked into defaults / `.tres`.
+  3. Run the headless logic tests as a sanity check before/after tuning: `./run_tests.sh
+     /path/to/godot` (or `run_tests.bat`).
+- **The single crux to validate** (determines the whole design): *"While I'm busy directly
+  piloting, does a fleet I do NOT micromanage (escort + harvest) feel like MY fleet?"* Validate
+  this ASAP with a minimal **mothership + 1 ally** vertical slice — the answer drives everything
+  downstream. (This is a tiny throwaway test ahead of the full Step 6 ally work, just to feel it.)
+- **Priority**: HIGHEST
+
 ## [2026-06-22] Impact Feedback: Screen Shake + Hit-Stop + Hit-Flash (+ VFX/SFX hooks)
 - **File(s)**: `scripts/fx/feedback.gd`, `scripts/fx/shake_camera.gd`, `scripts/fx/sound_fx.gd`, `scripts/fx/one_shot_effect.gd`, `scripts/ships/ship_base.gd`
 - **Action (code-only feel — do these for the test):**

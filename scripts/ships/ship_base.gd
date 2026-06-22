@@ -69,9 +69,12 @@ func _physics_process(delta: float) -> void:
 func take_damage(dmg: Damage) -> void:
 	# Future: an area Barrier component intercepts here before the hull, unless
 	# dmg.bypass_barrier (see docs/combat-system-design.md §3).
-	var was_alive: bool = not _health.is_dead()
+	# Already dead (e.g. a second projectile lands the same frame before queue_free
+	# resolves): swallow it so we don't shake/flash/tween on a freed node.
+	if _health.is_dead():
+		return
 	_health.take_damage(dmg)  # may emit died -> _on_died (queues free) synchronously
-	var killed: bool = was_alive and _health.is_dead()
+	var killed: bool = _health.is_dead()
 	_play_impact_feedback(killed)
 
 

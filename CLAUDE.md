@@ -85,9 +85,56 @@ void-break/
 - **Movement**: fake Newtonian physics with dampening. `linear_damp` ~1-1.5s coast. Soft speed cap. Boost disables dampening for ramming.
 - **Fleet AI**: HFSM base. Doctrine modules change state transitions. Start with hardcoded presets (guard, charge, ranged, standby).
 - **Rewards**: containers drop from defeated enemies. Contents applied at node transition (refit phase). Local powerups are node-scoped.
-- **Fleet regen**: ships return next node with condition penalty. Repair costs resources.
+- **Fleet regen**: the fleet **fully recovers for free** when you cross to the next node — it is a *renewable* resource, precious only WITHIN a node (attrition during the raid). Do not charge repair resources between nodes; the scarce cross-run currency is **player HP**, not fleet condition (see Core Design Pillars).
 - **Combat systems**: weapon/defense variety is built from independent axes (delivery, projectile motion, damage interaction, defense), not per-type subclasses. Damageable entities expose `take_damage(dmg: Damage)` with a typed `Damage` packet (school + `bypass_barrier`). Full design in `docs/combat-system-design.md`.
 - **Game feel**: a `Feedback` autoload (`scripts/fx/`) is the global juice bus — `add_trauma()` (screen shake via `ShakeCamera`), `hit_stop()` (wall-clock-timed `Engine.time_scale` dips). `ShipBase` drives shake/hit-stop/hit-flash from `take_damage`, tuned per-ship via `@export`. VFX/SFX are optional `PackedScene`/`AudioStream` slots, inert until assigned.
+
+## Core Design Pillars
+
+These are locked, load-bearing decisions. New systems must serve them; if a feature
+fights a pillar, the pillar wins.
+
+1. **A node = one small Tarkov-style extraction raid.** Procedurally generated,
+   pattern-based maps; supply crates + enemies spawn in key zones. How much you loot is
+   the player's call (greed vs safety). **Lingering** triggers aggressive enemy search +
+   reinforcements — you cannot camp a node.
+
+2. **Player HP is the scarce run-long currency.** It persists across the whole run and is
+   *not* easily recovered — this is the heart of the extraction stake. Recovery happens
+   **only at special event nodes, and only as ONE mutually-exclusive choice** (real
+   opportunity cost). _Between-node policy (default until playtesting says otherwise):_
+   **0 HP recovery between nodes.** If too punishing, add a small per-node regen
+   (~20–30%). **Never** full between-node healing — it collapses the scarcity keystone.
+
+3. **The fleet is semi-autonomous, never micromanaged.** Its jobs: escort the player and
+   collect resources. Behavior is shaped by equipped passive/active **modules** that react
+   to the player ship's state. The fleet **fully recovers for free at each node crossing**
+   (renewable), so it is precious only *within* a node.
+
+4. **One shared modular doctrine system drives BOTH enemy and ally AI.** Building enemy AI
+   lays the ally-AI foundation for free; looting enemy doctrines is a natural progression
+   loop.
+
+5. **Build identity = a power curve over time**, emerging via Slay-the-Spire-style reward
+   drafting (no fixed classes; mixing/synergy expected — the build difference is mostly
+   *which rewards drop*):
+   - **Fleet build** — strong early, attrites within a node → pushed to extract early.
+   - **Mothership build** — flat, consistent power → flexible on extraction timing.
+     Solves its "no fleet meat-shield" problem via **self-defense, not free healing**:
+     `ShipStats` defense (armor) / shield (personal shield) / resistances + mobility
+     (active evasion). It survives by not getting hit.
+   - **Engineer build** — strong late (ramp-up) → wants to linger. _Stretch goal; build
+     last._
+   - Emergent payoff: these curves map directly onto the node's **stay-vs-leave** decision.
+     Design rewards + enemy placement to lean into this.
+
+6. **Harvesting supports both modes.** Mothership build: player physically touches crates
+   (tanks the risk of hands-on looting). Fleet build: fleet auto-collects nearby crates.
+
+7. **Meta progression = light unlocks only** (starting captains / starting modules /
+   doctrines). Actual power is earned *within* a run.
+
+8. **Runs are short and tense:** ~20–40 min, 5–8 nodes, one run per session.
 
 ## Module-Ready Architecture
 
@@ -106,8 +153,8 @@ Rules:
 
 - [x] **Step 1: Movement** — `CharacterBody2D` or `RigidBody2D` with dampening-based fake Newtonian physics. All params via `MovementData` resource. `@export` for inspector tuning. (Editor: create player scene, attach script, add Camera2D) — _code complete; editor scene tracked in EDITOR_TODO.md_
 - [x] **Step 2: Projectile system** — `projectile_base.gd` with `WeaponData` resource. Shooting function on `ship_base`. Cooldown handling. (Editor: projectile scene with `Area2D`, input mapping for fire) — _code complete; editor scene tracked in EDITOR_TODO.md_
-- [ ] ← CURRENT **Step 3: Passive enemy** — `health_component.gd` for HP/damage/death signal. `enemy_basic.gd` as a stationary rotating dummy. (Editor: enemy scene, collision layers between player projectiles and enemies)
-- [ ] **Step 4: Enemy AI** — Extend enemy with detection, chase, and attack. Simple FSM: Idle → Chase → Attack. Enemy shooting. (Editor: detection `Area2D` on enemy, enemy projectile scene, collision layers for enemy projectiles vs player)
+- [x] **Step 3: Passive enemy** — `health_component.gd` for HP/damage/death signal. `enemy_basic.gd` as a stationary rotating dummy. (Editor: enemy scene, collision layers between player projectiles and enemies) — _code complete; editor scene tracked in EDITOR_TODO.md_
+- [ ] ← CURRENT **Step 4: Enemy AI** — Extend enemy with detection, chase, and attack. Simple FSM: Idle → Chase → Attack. Enemy shooting. (Editor: detection `Area2D` on enemy, enemy projectile scene, collision layers for enemy projectiles vs player)
 - [ ] **Step 5: Player HP + death** — `health_component` on player. HUD health bar. Game over screen with restart. (Editor: HUD `CanvasLayer`, game over UI)
 - [ ] **Step 6: First ally** — `ally_ship.gd` with basic follow + attack AI. `doctrine_guard.gd` hardcoded as first behavior doctrine. (Editor: ally scene with distinct neon color)
 - [ ] **Step 7: Single node vertical slice** — Map boundary. Enemy group placement (Poisson disk or random). 2-3 wormholes at map edges (touching = extraction success). Timer with escalating threat. Container drops from defeated enemies. Local powerups (node-scoped). (Editor: wormhole visuals, container visuals, minimap or directional indicators)
