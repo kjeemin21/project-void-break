@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "deny": [
+      "Edit(**.tscn)",
+      "Edit(**.tres)",
+      "Edit(**.import)",
+      "Write(**.tscn)",
+      "Write(**.tres)",
+      "Write(**.import)",
+      "Bash(rm *)",
+      "Bash(rm -rf *)"
+    ],
+    "allow": [
+      "Read(**.tscn)",
+      "Read(**.tres)",
+      "Read(**.import)",
+      "Edit(**.gd)",
+      "Edit(**.gdshader)",
+      "Edit(**.cfg)",
+      "Edit(**.md)",
+      "Edit(**.json)",
+      "Write(**.gd)",
+      "Write(**.gdshader)",
+      "Write(**.cfg)",
+      "Write(**.md)",
+      "Write(**.json)",
+      "Bash(grep *)",
+      "Bash(find *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(mkdir *)",
+      "Bash(git *)"
+    ]
+  }
+}
